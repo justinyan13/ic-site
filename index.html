@@ -1,0 +1,1871 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Justin Yan | Instacart APM</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --green: #108910;
+      --green-hover: #0a7a0a;
+      --green-dark: #003D29;
+      --green-light: #e8f5e8;
+      --cream: #F7F5F0;
+      --bg: #FFFFFF;
+      --bg-gray: #F6F7F8;
+      --text-primary: #242529;
+      --text-secondary: #343538;
+      --text-muted: #72767E;
+      --border: #E8E9EB;
+      --border-dark: #C7C8CD;
+      --white: #FFFFFF;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+      --shadow-md: 0 2px 8px rgba(0,0,0,0.08);
+      --shadow-lg: 0 4px 16px rgba(0,0,0,0.1);
+      --radius: 12px;
+      --radius-sm: 8px;
+      --radius-pill: 28px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', Arial, Helvetica, sans-serif;
+      background: var(--white);
+      color: var(--text-primary);
+      line-height: 1.4;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    /* ============================================
+       HEADER BAR
+       ============================================ */
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: var(--cream);
+      border-bottom: 1px solid #E5E2DB;
+    }
+
+    .header-inner {
+      max-width: 1152px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      padding: 12px 24px;
+      gap: 16px;
+    }
+
+    /* Logo */
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .logo-carrot {
+      width: 28px;
+      height: 28px;
+    }
+
+    .logo-text {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--green-dark);
+      letter-spacing: -0.5px;
+    }
+
+    /* Delivery address pill */
+    .address-wrap {
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .address-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border-dark);
+      background: var(--white);
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: border-color 0.2s;
+      white-space: nowrap;
+    }
+
+    .address-pill:hover { border-color: var(--text-muted); }
+    .address-pill.open { border-color: var(--green); box-shadow: 0 0 0 2px rgba(16,137,16,0.12); }
+
+    .address-pill svg { width: 16px; height: 16px; flex-shrink: 0; color: var(--text-muted); }
+    .address-pill .chevron { transition: transform 0.2s; }
+    .address-pill.open .chevron { transform: rotate(180deg); }
+    .address-small { font-weight: 400; color: var(--text-muted); font-size: 0.75rem; }
+
+    .address-dropdown {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      min-width: 220px;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-lg);
+      padding: 6px;
+      z-index: 60;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-4px);
+      transition: all 0.2s;
+    }
+
+    .address-dropdown.open {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    .address-dropdown .dd-label {
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      padding: 8px 10px 4px;
+    }
+
+    .address-option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: background 0.12s;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text-primary);
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+      font-family: inherit;
+    }
+
+    .address-option:hover { background: var(--bg-gray); }
+
+    .address-option.active { background: var(--green-light); }
+
+    .address-option .opt-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--bg-gray);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      flex-shrink: 0;
+    }
+
+    .address-option.active .opt-icon { background: var(--green); color: var(--white); font-size: 0.7rem; }
+
+    .address-option .opt-info { line-height: 1.3; }
+    .address-option .opt-city { font-weight: 600; font-size: 0.85rem; }
+    .address-option .opt-sub { font-size: 0.7rem; color: var(--text-muted); font-weight: 400; }
+
+    /* Search bar */
+    .search-wrap {
+      flex: 1;
+      position: relative;
+      max-width: 600px;
+    }
+
+    .search-wrap input {
+      width: 100%;
+      height: 48px;
+      padding: 0 16px 0 44px;
+      border: none;
+      border-radius: var(--radius-pill);
+      background: var(--bg-gray);
+      font-family: inherit;
+      font-size: 0.92rem;
+      font-weight: 500;
+      color: var(--text-primary);
+      outline: none;
+      transition: box-shadow 0.2s;
+    }
+
+    .search-wrap input:focus {
+      box-shadow: 0 0 0 2px var(--green);
+      background: var(--white);
+    }
+
+    .search-wrap input::placeholder { color: var(--text-muted); font-weight: 400; }
+
+    .search-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 20px;
+      height: 20px;
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+
+    .search-clear {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: none;
+      background: var(--border);
+      color: var(--text-muted);
+      font-size: 14px;
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+
+    .search-clear.show { display: flex; }
+
+    /* Cart button */
+    .cart-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: var(--radius-pill);
+      border: none;
+      background: var(--green);
+      color: var(--white);
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s;
+      flex-shrink: 0;
+    }
+
+    .cart-btn:hover { background: var(--green-hover); }
+
+    .cart-btn svg { width: 20px; height: 20px; fill: currentColor; }
+
+    .cart-badge {
+      background: var(--white);
+      color: var(--green);
+      font-size: 0.72rem;
+      font-weight: 800;
+      min-width: 20px;
+      height: 20px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 5px;
+    }
+
+    .cart-badge.pop { animation: pop 0.35s cubic-bezier(0.34,1.56,0.64,1); }
+    @keyframes pop { 50% { transform: scale(1.35); } }
+
+    /* ============================================
+       STORE HERO
+       ============================================ */
+    .store-hero {
+      background: var(--green-dark);
+      color: var(--white);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .store-hero::after {
+      content: '';
+      position: absolute;
+      top: -40%;
+      right: -5%;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(16,137,16,0.25) 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .hero-inner {
+      max-width: 1152px;
+      margin: 0 auto;
+      padding: 32px 24px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .store-icon {
+      width: 64px;
+      height: 64px;
+      border-radius: 16px;
+      object-fit: cover;
+      object-position: center 15%;
+      flex-shrink: 0;
+    }
+
+    .store-info h1 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+    }
+
+    .store-info p {
+      font-size: 0.85rem;
+      opacity: 0.8;
+      margin-top: 2px;
+    }
+
+    .store-badges {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+
+    .s-badge {
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.15);
+    }
+
+    /* ============================================
+       CATEGORY TABS
+       ============================================ */
+    .cat-bar {
+      position: sticky;
+      top: 73px;
+      z-index: 40;
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .cat-scroll {
+      max-width: 1152px;
+      margin: 0 auto;
+      padding: 10px 24px;
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .cat-scroll::-webkit-scrollbar { display: none; }
+
+    .cat-pill {
+      padding: 8px 18px;
+      border-radius: var(--radius-pill);
+      border: 1.5px solid var(--border);
+      background: var(--white);
+      font-family: inherit;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+
+    .cat-pill:hover { border-color: var(--border-dark); background: var(--bg-gray); }
+
+    .cat-pill.active {
+      background: var(--green-dark);
+      border-color: var(--green-dark);
+      color: var(--white);
+    }
+
+    /* ============================================
+       MAIN CONTENT
+       ============================================ */
+    .main {
+      max-width: 1152px;
+      margin: 0 auto;
+      padding: 0 24px 48px;
+    }
+
+    /* Aisle (section) */
+    .aisle {
+      padding-top: 28px;
+    }
+
+    .aisle-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .aisle-title {
+      font-size: 1.25rem;
+      font-weight: 800;
+      letter-spacing: -0.2px;
+    }
+
+    .aisle-count {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    /* Product grid */
+    .p-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 12px;
+    }
+
+    /* Product card */
+    .p-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: box-shadow 0.2s, border-color 0.2s;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .p-card:hover {
+      box-shadow: var(--shadow-md);
+      border-color: var(--border-dark);
+    }
+
+    .p-card-img {
+      height: 140px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+      position: relative;
+      background: var(--bg-gray);
+    }
+
+    .p-card-img img {
+      width: 56px;
+      height: 56px;
+      object-fit: contain;
+    }
+
+    /* Green add button in top-right of image */
+    .p-add {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: none;
+      background: var(--green);
+      color: var(--white);
+      font-size: 1.35rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      transition: all 0.15s;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      z-index: 2;
+    }
+
+    .p-add:hover { background: var(--green-hover); transform: scale(1.1); }
+
+    .p-add.added {
+      background: var(--green);
+      pointer-events: none;
+      font-size: 0.85rem;
+    }
+
+    .p-body {
+      padding: 10px 12px 14px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .p-role {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      margin-bottom: 4px;
+    }
+
+    .role-pm { color: #e65100; }
+    .role-tpm { color: #1565c0; }
+    .role-data { color: #7b1fa2; }
+    .role-project { color: var(--green); }
+    .role-proposal { color: #c62828; }
+    .role-current { color: var(--green); }
+    .role-edu { color: #4527a0; }
+    .role-lead { color: #ef6c00; }
+
+    .p-name {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.3;
+      margin-bottom: 4px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .p-desc {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      line-height: 1.45;
+      flex: 1;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .p-tags {
+      display: flex;
+      gap: 4px;
+      margin-top: 8px;
+      flex-wrap: wrap;
+    }
+
+    .p-tag {
+      font-size: 0.65rem;
+      font-weight: 600;
+      background: var(--bg-gray);
+      color: var(--text-muted);
+      padding: 2px 7px;
+      border-radius: 4px;
+    }
+
+    /* No results */
+    .no-results {
+      text-align: center;
+      padding: 60px 20px;
+      display: none;
+    }
+
+    .no-results.show { display: block; }
+
+    .no-results h3 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .no-results p { color: var(--text-muted); font-size: 0.9rem; }
+
+    /* Why section */
+    .why-card {
+      background: var(--bg-gray);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-top: 28px;
+    }
+
+    .why-card h3 {
+      font-size: 1rem;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .why-card p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.65;
+    }
+
+    /* ============================================
+       CART SIDEBAR
+       ============================================ */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 100;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.25s;
+    }
+
+    .overlay.open { opacity: 1; visibility: visible; }
+
+    .sidebar {
+      position: fixed;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: 400px;
+      max-width: 100%;
+      background: var(--white);
+      z-index: 101;
+      transform: translateX(100%);
+      transition: transform 0.3s cubic-bezier(0.25,0.46,0.45,0.94);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar.open { transform: translateX(0); }
+
+    .sb-head {
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .sb-head h2 { font-size: 1.1rem; font-weight: 800; }
+
+    .sb-close {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: none;
+      background: var(--bg-gray);
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-primary);
+      transition: background 0.15s;
+    }
+
+    .sb-close:hover { background: var(--border); }
+
+    .sb-items {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 20px;
+    }
+
+    .sb-empty {
+      text-align: center;
+      padding: 40px 0;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    .sb-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      animation: slideIn 0.25s ease;
+    }
+
+    @keyframes slideIn { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: translateX(0); } }
+
+    .sb-item-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-sm);
+      background: var(--bg-gray);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      flex-shrink: 0;
+    }
+
+    .sb-item-info { flex: 1; min-width: 0; }
+    .sb-item-name { font-size: 0.82rem; font-weight: 700; }
+    .sb-item-role { font-size: 0.72rem; color: var(--text-muted); }
+
+    .sb-item-rm {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.1rem;
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 50%;
+      transition: all 0.15s;
+      flex-shrink: 0;
+    }
+
+    .sb-item-rm:hover { color: #d32f2f; background: #ffebee; }
+
+    .sb-footer {
+      padding: 16px 20px;
+      border-top: 1px solid var(--border);
+      background: var(--bg-gray);
+    }
+
+    .sb-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.82rem;
+      padding: 4px 0;
+      color: var(--text-muted);
+    }
+
+    .sb-row.total {
+      font-weight: 800;
+      font-size: 0.95rem;
+      color: var(--text-primary);
+      padding-top: 10px;
+      margin-top: 6px;
+      border-top: 1px solid var(--border);
+    }
+
+    .sb-checkout {
+      width: 100%;
+      margin-top: 14px;
+      padding: 14px;
+      border: none;
+      border-radius: var(--radius);
+      background: var(--green);
+      color: var(--white);
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .sb-checkout:hover { background: var(--green-hover); }
+
+    /* ============================================
+       CHECKOUT MODAL
+       ============================================ */
+    .modal-bg {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.25s;
+    }
+
+    .modal-bg.open { opacity: 1; visibility: visible; }
+
+    .modal {
+      background: var(--white);
+      border-radius: 16px;
+      max-width: 440px;
+      width: 100%;
+      overflow: hidden;
+      transform: scale(0.96) translateY(8px);
+      transition: transform 0.25s;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .modal-bg.open .modal { transform: scale(1) translateY(0); }
+
+    .modal-header {
+      background: var(--green-dark);
+      color: var(--white);
+      padding: 28px 24px;
+      text-align: center;
+    }
+
+    .modal-header h2 { font-size: 1.3rem; font-weight: 800; }
+    .modal-header p { font-size: 0.85rem; opacity: 0.8; margin-top: 4px; }
+
+    .modal-body { padding: 24px; }
+
+    .modal-msg {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      text-align: center;
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+
+    .cta-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .cta-link {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      text-decoration: none;
+      color: var(--text-primary);
+      transition: all 0.15s;
+    }
+
+    .cta-link:hover { border-color: var(--green); background: var(--green-light); }
+
+    .cta-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.15rem;
+      flex-shrink: 0;
+    }
+
+    .cta-link strong { font-weight: 700; font-size: 0.88rem; }
+    .cta-link small { color: var(--text-muted); font-size: 0.75rem; }
+
+    .modal-dismiss {
+      display: block;
+      margin: 16px auto 0;
+      background: none;
+      border: none;
+      font-family: inherit;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 8px 14px;
+      border-radius: 8px;
+    }
+
+    .modal-dismiss:hover { background: var(--bg-gray); color: var(--text-primary); }
+
+    /* ============================================
+       DETAIL MODAL
+       ============================================ */
+    .detail-bg {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.25s;
+    }
+
+    .detail-bg.open { opacity: 1; visibility: visible; }
+
+    .detail-modal {
+      background: var(--white);
+      border-radius: 16px;
+      max-width: 520px;
+      width: 100%;
+      overflow: hidden;
+      transform: scale(0.96) translateY(8px);
+      transition: transform 0.25s;
+      box-shadow: var(--shadow-lg);
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .detail-bg.open .detail-modal { transform: scale(1) translateY(0); }
+
+    .detail-hero {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 24px 24px 0;
+    }
+
+    .detail-emoji {
+      width: 64px;
+      height: 64px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      flex-shrink: 0;
+    }
+
+    .detail-emoji img {
+      width: 40px;
+      height: 40px;
+      object-fit: contain;
+    }
+
+    .detail-title-wrap { flex: 1; min-width: 0; }
+    .detail-role { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 2px; }
+    .detail-name { font-size: 1.2rem; font-weight: 800; color: var(--text-primary); }
+    .detail-period { font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; }
+
+    .detail-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: none;
+      background: var(--bg-gray);
+      color: var(--text-muted);
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+
+    .detail-close:hover { background: var(--border); color: var(--text-primary); }
+
+    .detail-body {
+      padding: 20px 24px 24px;
+      overflow-y: auto;
+    }
+
+    .detail-summary {
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+      line-height: 1.65;
+      margin-bottom: 16px;
+    }
+
+    .detail-highlights h4 {
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .detail-highlights ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .detail-highlights li {
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      padding-left: 18px;
+      position: relative;
+    }
+
+    .detail-highlights li::before {
+      content: '\2022';
+      position: absolute;
+      left: 4px;
+      color: var(--green);
+      font-weight: 700;
+    }
+
+    .detail-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 16px;
+      padding: 10px 18px;
+      background: var(--green);
+      color: var(--white);
+      border-radius: var(--radius-sm);
+      font-size: 0.82rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: background 0.15s;
+    }
+
+    .detail-link:hover { background: var(--green-hover); }
+
+    .detail-tags {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+
+    .detail-tag {
+      font-size: 0.7rem;
+      font-weight: 600;
+      background: var(--bg-gray);
+      color: var(--text-muted);
+      padding: 4px 10px;
+      border-radius: 6px;
+    }
+
+    @media (max-width: 640px) {
+      .detail-modal { max-width: 100%; margin: 0 8px; }
+      .detail-hero { padding: 20px 18px 0; }
+      .detail-body { padding: 16px 18px 20px; }
+      .detail-emoji { width: 52px; height: 52px; font-size: 1.6rem; }
+      .detail-name { font-size: 1.05rem; }
+    }
+
+    /* ============================================
+       FOOTER
+       ============================================ */
+    .footer {
+      border-top: 1px solid var(--border);
+      padding: 20px 24px;
+      text-align: center;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .footer a { color: var(--green); font-weight: 600; }
+
+    /* ============================================
+       RESPONSIVE
+       ============================================ */
+    @media (max-width: 768px) {
+      .header-inner { padding: 10px 16px; gap: 10px; }
+      .address-wrap { display: none; }
+      .logo-text { font-size: 1.15rem; }
+      .search-wrap input { height: 42px; font-size: 0.85rem; }
+      .cart-btn { padding: 8px 12px; }
+      .cart-btn .cart-label { display: none; }
+      .hero-inner { padding: 24px 16px; }
+      .store-info h1 { font-size: 1.25rem; }
+      .cat-scroll { padding: 8px 16px; }
+      .main { padding: 0 16px 32px; }
+      .p-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+      .p-card-img { height: 110px; font-size: 2.4rem; }
+      .p-body { padding: 8px 10px 12px; }
+      .p-name { font-size: 0.82rem; }
+      .p-desc { font-size: 0.72rem; }
+      .sidebar { width: 100%; }
+      .cat-bar { top: 63px; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ===== HEADER ===== -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo" onclick="location.reload()">
+        <svg class="logo-carrot" viewBox="0 0 32 32" fill="none">
+          <path d="M16 4c-1.5 3-1 6 0 8 1-2 1.5-5 0-8z" fill="#43B02A"/>
+          <path d="M13 5c-2 2-2 5-1 7.5 1.5-1 3-4 1-7.5z" fill="#43B02A"/>
+          <path d="M19 5c2 2 2 5 1 7.5-1.5-1-3-4-1-7.5z" fill="#43B02A"/>
+          <path d="M10 12c1.2-.2 3.8-.5 6-.5s4.8.3 6 .5c.8.1 1.3.9 1.1 1.7l-3.5 13c-.3 1.1-1.3 1.8-2.4 1.8h-2.4c-1.1 0-2.1-.7-2.4-1.8l-3.5-13c-.2-.8.3-1.6 1.1-1.7z" fill="#F58220"/>
+        </svg>
+        <span class="logo-text">justincart</span>
+      </div>
+
+      <div class="address-wrap">
+        <div class="address-pill" id="addressPill">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          <div>
+            <div style="font-size:0.72rem;color:var(--text-muted);font-weight:400">Deliver to</div>
+            <div id="addressCity">New York City</div>
+          </div>
+          <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M6 9l6 6 6-6"/></svg>
+        </div>
+        <div class="address-dropdown" id="addressDropdown">
+          <div class="dd-label">Current</div>
+          <button class="address-option active" data-city="New York City">
+            <span class="opt-icon" data-emoji="&#128509;">&#10003;</span>
+            <div class="opt-info"><div class="opt-city">New York City</div><div class="opt-sub">Current city</div></div>
+          </button>
+          <div class="dd-label" style="margin-top:4px">Previously lived in</div>
+          <button class="address-option" data-city="San Francisco">
+            <span class="opt-icon">&#127753;</span>
+            <div class="opt-info"><div class="opt-city">San Francisco</div><div class="opt-sub">California</div></div>
+          </button>
+          <button class="address-option" data-city="Vancouver">
+            <span class="opt-icon">&#127956;</span>
+            <div class="opt-info"><div class="opt-city">Vancouver</div><div class="opt-sub">British Columbia</div></div>
+          </button>
+          <button class="address-option" data-city="London">
+            <span class="opt-icon">&#127464;&#127462;</span>
+            <div class="opt-info"><div class="opt-city">London</div><div class="opt-sub">Ontario</div></div>
+          </button>
+          <button class="address-option" data-city="Toronto">
+            <span class="opt-icon">6&#65039;&#8419;</span>
+            <div class="opt-info"><div class="opt-city">Toronto</div><div class="opt-sub">Ontario</div></div>
+          </button>
+        </div>
+      </div>
+
+      <div class="search-wrap">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="searchInput" placeholder="Search qualifications...">
+        <button class="search-clear" id="searchClear">&times;</button>
+      </div>
+
+      <button class="cart-btn" id="cartToggle">
+        <svg viewBox="0 0 24 24"><path d="M7 18c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm10 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zM7.16 14.26l.04-.12.94-1.7h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49A1 1 0 0 0 20.04 4H5.21l-.94-2H1v2h2l3.6 7.59-1.35 2.44C4.52 15.37 5.48 17 7 17h12v-2H7.42c-.14 0-.25-.11-.25-.25z"/></svg>
+        <span class="cart-label">Cart</span>
+        <span class="cart-badge" id="cartBadge">0</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ===== STORE HERO ===== -->
+  <div class="store-hero">
+    <div class="hero-inner">
+      <img class="store-icon" src="justin-face.jpg" alt="Justin Yan">
+      <div class="store-info">
+        <h1>Justin Yan's Store</h1>
+        <p>Product Manager</p>
+        <div class="store-badges">
+          <span class="s-badge">&#9733; 5.0</span>
+          <span class="s-badge">&#128666; Available Aug 2026</span>
+          <span class="s-badge">&#127891; CS + Business @ Western</span>
+          <a href="https://drive.google.com/file/d/10pce1VpWAuF3xsxaruIyctCXLpZpv8PU/view?usp=sharing" target="_blank" rel="noopener" class="s-badge" style="text-decoration:none;color:inherit;">&#128196; Resume</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== CATEGORY TABS ===== -->
+  <div class="cat-bar">
+    <div class="cat-scroll" id="catScroll">
+      <button class="cat-pill active" data-cat="all">All</button>
+      <button class="cat-pill" data-cat="experience">Experience</button>
+      <button class="cat-pill" data-cat="projects">Projects</button>
+      <button class="cat-pill" data-cat="about">About Me</button>
+      <button class="cat-pill" data-cat="leadership">Leadership</button>
+    </div>
+  </div>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main" id="mainContent">
+
+    <div class="no-results" id="noResults">
+      <h3>No results found</h3>
+      <p>Try a different search term</p>
+    </div>
+
+    <!-- EXPERIENCE -->
+    <div class="aisle" data-aisle="experience all" id="aisle-experience">
+      <div class="aisle-head">
+        <h2 class="aisle-title">Experience</h2>
+        <span class="aisle-count">6 items</span>
+      </div>
+      <div class="p-grid">
+
+        <div class="p-card" data-search="datadog product manager observability saas cloud">
+          <div class="p-card-img" style="background:#EDE7F6"><img src="logos/datadog.png" alt="Datadog"></div>
+          <button class="p-add" data-id="datadog" data-emoji="&#128054;" data-label="Datadog" data-role="Product Manager">+</button>
+          <div class="p-body">
+            <div class="p-role role-pm">Product Manager</div>
+            <div class="p-name">Datadog</div>
+            <div class="p-desc">Working on building observability tools for engineering teams at one of the leading cloud monitoring platforms.</div>
+            <div class="p-tags"><span class="p-tag">Current</span><span class="p-tag">SaaS</span></div>
+          </div>
+        </div>
+
+        <div class="p-card" data-search="1password product manager security password">
+          <div class="p-card-img" style="background:#0094F5"><img src="logos/1password-t.svg" alt="1Password"></div>
+          <button class="p-add" data-id="1pass" data-emoji="&#128274;" data-label="1Password" data-role="Product Manager">+</button>
+          <div class="p-body">
+            <div class="p-role role-pm">Product Manager</div>
+            <div class="p-name">1Password</div>
+            <div class="p-desc">Shipped product features for the world's most trusted password manager, delivering security tools to millions.</div>
+            <div class="p-tags"><span class="p-tag">Security</span><span class="p-tag">B2C</span></div>
+          </div>
+        </div>
+
+        <div class="p-card" data-search="tesla technical program manager engineering automotive">
+          <div class="p-card-img" style="background:#FFEBEE"><img src="logos/tesla.png" alt="Tesla"></div>
+          <button class="p-add" data-id="tesla" data-emoji="&#9889;" data-label="Tesla" data-role="Technical Program Manager">+</button>
+          <div class="p-body">
+            <div class="p-role role-tpm">Technical Program Mgr</div>
+            <div class="p-name">Tesla</div>
+            <div class="p-desc">Coordinated cross-functional engineering teams to ship technical programs at one of the world's most innovative companies.</div>
+            <div class="p-tags"><span class="p-tag">Auto</span><span class="p-tag">Hardware</span></div>
+          </div>
+        </div>
+
+        <div class="p-card" data-search="wealthsimple product operations fintech finance">
+          <div class="p-card-img" style="background:#E8F5E9"><img src="logos/wealthsimple.png" alt="Wealthsimple"></div>
+          <button class="p-add" data-id="ws" data-emoji="&#128176;" data-label="Wealthsimple" data-role="Product & Operations">+</button>
+          <div class="p-body">
+            <div class="p-role role-pm">Product &amp; Ops</div>
+            <div class="p-name">Wealthsimple</div>
+            <div class="p-desc">Drove product and operational initiatives at Canada's leading fintech, making financial markets accessible.</div>
+            <div class="p-tags"><span class="p-tag">Fintech</span><span class="p-tag">Ops</span></div>
+          </div>
+        </div>
+
+        <div class="p-card" data-search="anheuser busch data engineer pipelines consumer">
+          <div class="p-card-img" style="background:#FFF3E0"><img src="logos/ab.png" alt="Anheuser-Busch"></div>
+          <button class="p-add" data-id="ab" data-emoji="&#128202;" data-label="Anheuser-Busch" data-role="Data Engineer">+</button>
+          <div class="p-body">
+            <div class="p-role role-data">Data Engineer</div>
+            <div class="p-name">Anheuser-Busch</div>
+            <div class="p-desc">Built data pipelines and engineering solutions for one of the world's largest consumer goods companies.</div>
+            <div class="p-tags"><span class="p-tag">Data</span><span class="p-tag">CPG</span></div>
+          </div>
+        </div>
+
+        <div class="p-card" data-search="psystem software engineer startup founding">
+          <div class="p-card-img" style="background:#EDE7F6">&#128640;</div>
+          <button class="p-add" data-id="psys" data-emoji="&#128640;" data-label="Psystem" data-role="Software Engineer">+</button>
+          <div class="p-body">
+            <div class="p-role role-tpm">Software Engineer</div>
+            <div class="p-name">Psystem</div>
+            <div class="p-desc">Led technical product strategy and engineering execution as a founding team member.</div>
+            <div class="p-tags"><span class="p-tag">Startup</span><span class="p-tag">Founding</span></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- PROJECTS -->
+    <div class="aisle" data-aisle="projects all" id="aisle-projects">
+      <div class="aisle-head">
+        <h2 class="aisle-title">Projects</h2>
+        <span class="aisle-count">4 items</span>
+      </div>
+      <div class="p-grid">
+
+        <div class="p-card" data-search="hack western event scheduler hackathon full stack">
+          <div class="p-card-img" style="background:#fff"><img src="logos/hackwestern.png" alt="Hack Western" style="width:80px;height:80px;"></div>
+          <button class="p-add" data-id="sched" data-emoji="&#128197;" data-label="Event Scheduler" data-role="Hack Western">+</button>
+          <div class="p-body">
+            <div class="p-role role-project">Technical Project</div>
+            <div class="p-name">Hack Western Event Scheduler</div>
+            <div class="p-desc">Scheduling tool for hackathon attendees to plan their experience and never miss a workshop.</div>
+            <div class="p-tags"><span class="p-tag">Hackathon</span><span class="p-tag">Full-Stack</span></div>
+          </div>
+        </div>
+
+        <div class="p-card" data-search="imessage portfolio creative web design ui ux">
+          <div class="p-card-img" style="background:#34C759"><img src="logos/imessage-t.svg" alt="iMessage"></div>
+          <button class="p-add" data-id="imsg" data-emoji="&#128172;" data-label="iMessage Portfolio" data-role="Creative Project">+</button>
+          <div class="p-body">
+            <div class="p-role role-project">Technical Project</div>
+            <div class="p-name">iMessage Portfolio</div>
+            <div class="p-desc">A portfolio disguised as an iMessage conversation, blending personality with unconventional design.</div>
+            <div class="p-tags"><span class="p-tag">Creative</span><span class="p-tag">UI/UX</span></div>
+          </div>
+        </div>
+
+        <div class="p-card" data-search="strava wrapped fitness running data visualization api">
+          <div class="p-card-img" style="background:#FC4C02"><img src="logos/strava-t.svg" alt="Strava"></div>
+          <button class="p-add" data-id="strava" data-emoji="&#127939;" data-label="Strava Wrapped" data-role="Data Viz Project">+</button>
+          <div class="p-body">
+            <div class="p-role role-project">Technical Project</div>
+            <div class="p-name">Strava Wrapped</div>
+            <div class="p-desc">Year-in-review for Strava users, visualizing running and fitness data in a shareable format.</div>
+            <div class="p-tags"><span class="p-tag">Data Viz</span><span class="p-tag">API</span></div>
+          </div>
+        </div>
+
+        <div class="p-card" data-search="bereal prompts product proposal community social">
+          <div class="p-card-img" style="background:#000"><img src="logos/bereal-t.svg" alt="BeReal"></div>
+          <button class="p-add" data-id="bereal" data-emoji="&#128248;" data-label="BeReal Prompts" data-role="Product Proposal">+</button>
+          <div class="p-body">
+            <div class="p-role role-proposal">Product Proposal</div>
+            <div class="p-name">BeReal Prompts</div>
+            <div class="p-desc">Feature proposal introducing themed prompts to drive novelty and deepen community engagement.</div>
+            <div class="p-tags"><span class="p-tag">Novelty</span><span class="p-tag">Community</span></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ABOUT -->
+    <div class="aisle" data-aisle="about all" id="aisle-about">
+      <div class="aisle-head">
+        <h2 class="aisle-title">About Me</h2>
+        <span class="aisle-count">2 items</span>
+      </div>
+      <div class="p-grid">
+
+        <div class="p-card" data-search="datadog current role product manager status">
+          <div class="p-card-img" style="background:#EDE7F6"><img src="logos/datadog.png" alt="Datadog"></div>
+          <button class="p-add" data-id="status" data-emoji="&#128188;" data-label="PM @ Datadog" data-role="Current Role">+</button>
+          <div class="p-body">
+            <div class="p-role role-current">Current</div>
+            <div class="p-name">PM @ Datadog</div>
+            <div class="p-desc">Just started as a Product Manager, working on building observability tools for engineering teams.</div>
+            <div class="p-tags"><span class="p-tag">2025</span></div>
+          </div>
+        </div>
+
+        <div class="p-card" data-search="ivey western university computer science business education">
+          <div class="p-card-img" style="background:#fff"><img src="logos/western-university.png" alt="Western University"></div>
+          <button class="p-add" data-id="edu" data-emoji="&#127891;" data-label="CS + Business" data-role="Education">+</button>
+          <div class="p-body">
+            <div class="p-role role-edu">Education</div>
+            <div class="p-name">Western University</div>
+            <div class="p-desc">Dual degree in Computer Science and Business. Graduating with 2 Bachelor's in 5 years.</div>
+            <div class="p-tags"><span class="p-tag">Dual Degree</span></div>
+          </div>
+        </div>
+
+
+      </div>
+    </div>
+
+    <!-- LEADERSHIP -->
+    <div class="aisle" data-aisle="leadership all" id="aisle-leadership">
+      <div class="aisle-head">
+        <h2 class="aisle-title">Leadership</h2>
+        <span class="aisle-count">3 items</span>
+      </div>
+      <div class="p-grid">
+
+        <div class="p-card" data-search="hack western hackathon web team development">
+          <div class="p-card-img" style="background:#fff"><img src="logos/hackwestern.png" alt="Hack Western" style="width:80px;height:80px;"></div>
+          <button class="p-add" data-id="hw" data-emoji="&#128187;" data-label="Hack Western 10" data-role="Web Team">+</button>
+          <div class="p-body">
+            <div class="p-role role-lead">Leadership</div>
+            <div class="p-name">Hack Western 10</div>
+            <div class="p-desc">Web Team member building the digital experience for Western's largest hackathon.</div>
+            <div class="p-tags"><span class="p-tag">Web Dev</span></div>
+          </div>
+        </div>
+
+        <div class="p-card" data-search="ivey tech club mentorship vice president">
+          <div class="p-card-img" style="background:#E0EDE8"><img src="logos/ivey-tech-club.png" alt="Ivey Tech Club"></div>
+          <button class="p-add" data-id="itc" data-emoji="&#129309;" data-label="Ivey Tech Club" data-role="VP Mentorship">+</button>
+          <div class="p-body">
+            <div class="p-role role-lead">Leadership</div>
+            <div class="p-name">Ivey Tech Club</div>
+            <div class="p-desc">VP Mentorship, connecting students with industry mentors across tech and business.</div>
+            <div class="p-tags"><span class="p-tag">VP</span><span class="p-tag">Mentorship</span></div>
+          </div>
+        </div>
+
+        <div class="p-card" data-search="western product society fellowship vice president">
+          <div class="p-card-img" style="background:#f5f0ff"><img src="logos/ivey-product-society.png" alt="Ivey Product Society"></div>
+          <button class="p-add" data-id="wps" data-emoji="&#128161;" data-label="Western Product Society" data-role="VP Fellowship">+</button>
+          <div class="p-body">
+            <div class="p-role role-lead">Leadership</div>
+            <div class="p-name">Western Product Society</div>
+            <div class="p-desc">VP Fellowship, cultivating the next generation of product thinkers through workshops and community.</div>
+            <div class="p-tags"><span class="p-tag">VP</span><span class="p-tag">Fellowship</span></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===== FOOTER ===== -->
+  <div class="footer">
+    Made with &hearts; by <strong>Justin Yan</strong> &copy; 2026
+  </div>
+
+  <!-- ===== CART SIDEBAR ===== -->
+  <div class="overlay" id="overlay"></div>
+  <div class="sidebar" id="sidebar">
+    <div class="sb-head">
+      <h2>Your cart</h2>
+      <button class="sb-close" id="sbClose">&times;</button>
+    </div>
+    <div class="sb-items" id="sbItems">
+      <div class="sb-empty" id="sbEmpty">Add Justin's qualifications to get started</div>
+    </div>
+    <div class="sb-footer">
+      <div class="sb-row"><span>Qualifications</span><span id="sbCount">0 items</span></div>
+      <div class="sb-row total"><span>Impact</span><span id="sbImpact">&#9733; 0.0</span></div>
+      <button class="sb-checkout" id="sbCheckout">Place order &mdash; Connect with Justin</button>
+    </div>
+  </div>
+
+  <!-- ===== DETAIL MODAL ===== -->
+  <div class="detail-bg" id="detailBg">
+    <div class="detail-modal" style="position:relative;">
+      <button class="detail-close" id="detailClose">&times;</button>
+      <div class="detail-hero">
+        <div class="detail-emoji" id="detailEmoji"></div>
+        <div class="detail-title-wrap">
+          <div class="detail-role" id="detailRole"></div>
+          <div class="detail-name" id="detailName"></div>
+          <div class="detail-period" id="detailPeriod"></div>
+        </div>
+      </div>
+      <div class="detail-body">
+        <div class="detail-summary" id="detailSummary"></div>
+        <div class="detail-highlights" id="detailHighlights"></div>
+        <a class="detail-link" id="detailLink" href="#" target="_blank" rel="noopener" style="display:none;">View Project &rarr;</a>
+        <div class="detail-tags" id="detailTags"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== CHECKOUT MODAL ===== -->
+  <div class="modal-bg" id="modalBg">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Order placed!</h2>
+        <p>Justin is ready to deliver</p>
+      </div>
+      <div class="modal-body">
+        <p class="modal-msg">Thanks for browsing! I'd love to connect and chat about opportunities.</p>
+        <div class="cta-list">
+          <a href="https://calendly.com/justinyan/chat" target="_blank" rel="noopener" class="cta-link">
+            <span class="cta-icon" style="background:#E8F5E9">&#128197;</span>
+            <div><strong>Coffee Chat</strong><br><small>Book a time on Calendly</small></div>
+          </a>
+          <a href="mailto:justinyan.career@gmail.com" class="cta-link">
+            <span class="cta-icon" style="background:#E3F2FD">&#9993;&#65039;</span>
+            <div><strong>Email</strong><br><small>justinyan.career@gmail.com</small></div>
+          </a>
+          <a href="https://www.linkedin.com/in/justinyan13" target="_blank" rel="noopener" class="cta-link">
+            <span class="cta-icon" style="background:#E8EAF6">&#128100;</span>
+            <div><strong>LinkedIn</strong><br><small>linkedin.com/in/justinyan13</small></div>
+          </a>
+          <a href="https://drive.google.com/file/d/10pce1VpWAuF3xsxaruIyctCXLpZpv8PU/view?usp=sharing" target="_blank" rel="noopener" class="cta-link">
+            <span class="cta-icon" style="background:#FFF3E0">&#128196;</span>
+            <div><strong>Resume</strong><br><small>View on Google Drive</small></div>
+          </a>
+        </div>
+        <button class="modal-dismiss" id="modalClose">Continue shopping</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const $ = id => document.getElementById(id);
+
+    // ========== ADDRESS DROPDOWN ==========
+    const addressPill = $('addressPill');
+    const addressDropdown = $('addressDropdown');
+    const addressCity = $('addressCity');
+
+    addressPill.addEventListener('click', e => {
+      e.stopPropagation();
+      const isOpen = addressDropdown.classList.toggle('open');
+      addressPill.classList.toggle('open', isOpen);
+    });
+
+    document.addEventListener('click', e => {
+      if (!e.target.closest('.address-wrap')) {
+        addressDropdown.classList.remove('open');
+        addressPill.classList.remove('open');
+      }
+    });
+
+    document.querySelectorAll('.address-option').forEach(opt => {
+      opt.addEventListener('click', () => {
+        const city = opt.dataset.city;
+        addressCity.textContent = city;
+        document.querySelectorAll('.address-option').forEach(o => {
+          o.classList.remove('active');
+          o.querySelector('.opt-icon').innerHTML = o === opt ? '&#10003;' : o.querySelector('.opt-icon').dataset.emoji || o.querySelector('.opt-icon').innerHTML;
+        });
+        opt.classList.add('active');
+        opt.querySelector('.opt-icon').innerHTML = '&#10003;';
+        addressDropdown.classList.remove('open');
+        addressPill.classList.remove('open');
+      });
+    });
+
+    // Store original emojis for non-active options
+    document.querySelectorAll('.address-option:not(.active)').forEach(opt => {
+      opt.querySelector('.opt-icon').dataset.emoji = opt.querySelector('.opt-icon').innerHTML;
+    });
+
+    // ========== STATE ==========
+    const cart = new Map();
+
+    // ========== REFS ==========
+    const searchInput = $('searchInput');
+    const searchClear = $('searchClear');
+    const cartBadge = $('cartBadge');
+    const sbItems = $('sbItems');
+    const sbEmpty = $('sbEmpty');
+    const sbCount = $('sbCount');
+    const sbImpact = $('sbImpact');
+    const overlay = $('overlay');
+    const sidebar = $('sidebar');
+    const modalBg = $('modalBg');
+    const noResults = $('noResults');
+    const allCards = document.querySelectorAll('.p-card');
+    const allAisles = document.querySelectorAll('.aisle, .why-card');
+
+    // ========== CATEGORIES ==========
+    let activeCat = 'all';
+
+    document.querySelectorAll('.cat-pill').forEach(pill => {
+      pill.addEventListener('click', () => {
+        activeCat = pill.dataset.cat;
+        document.querySelectorAll('.cat-pill').forEach(p => p.classList.toggle('active', p === pill));
+        searchInput.value = '';
+        searchClear.classList.remove('show');
+        filterView();
+      });
+    });
+
+    function filterView() {
+      const query = searchInput.value.toLowerCase().trim();
+      let visibleCount = 0;
+
+      allAisles.forEach(a => {
+        const aisles = a.dataset.aisle.split(' ');
+        if (!query) {
+          a.style.display = aisles.includes(activeCat) ? '' : 'none';
+        } else {
+          // Show all aisles when searching
+          a.style.display = (a.classList.contains('why-card')) ? 'none' : '';
+        }
+      });
+
+      allCards.forEach(card => {
+        const text = (card.dataset.search + ' ' + card.textContent).toLowerCase();
+        const matchesSearch = !query || text.includes(query);
+        const aisle = card.closest('.aisle');
+        const aisleCategories = aisle ? aisle.dataset.aisle.split(' ') : ['all'];
+        const matchesCat = query || aisleCategories.includes(activeCat);
+
+        const show = matchesSearch && matchesCat;
+        card.style.display = show ? '' : 'none';
+        if (show) visibleCount++;
+      });
+
+      // Hide aisle if all its cards hidden
+      if (query) {
+        document.querySelectorAll('.aisle').forEach(aisle => {
+          const cards = aisle.querySelectorAll('.p-card');
+          let anyVisible = false;
+          cards.forEach(c => { if (c.style.display !== 'none') anyVisible = true; });
+          aisle.style.display = anyVisible ? '' : 'none';
+        });
+      }
+
+      noResults.classList.toggle('show', visibleCount === 0 && query.length > 0);
+    }
+
+    // ========== SEARCH ==========
+    searchInput.addEventListener('input', () => {
+      searchClear.classList.toggle('show', searchInput.value.length > 0);
+      if (searchInput.value.length > 0) {
+        document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('active'));
+      } else {
+        document.querySelectorAll('.cat-pill').forEach(p => p.classList.toggle('active', p.dataset.cat === activeCat));
+      }
+      filterView();
+    });
+
+    searchClear.addEventListener('click', () => {
+      searchInput.value = '';
+      searchClear.classList.remove('show');
+      document.querySelectorAll('.cat-pill').forEach(p => p.classList.toggle('active', p.dataset.cat === activeCat));
+      filterView();
+      searchInput.focus();
+    });
+
+    // ========== ADD TO CART ==========
+    document.querySelectorAll('.p-add').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const id = btn.dataset.id;
+        if (cart.has(id)) return;
+        cart.set(id, { emoji: btn.dataset.emoji, label: btn.dataset.label, role: btn.dataset.role });
+        btn.classList.add('added');
+        btn.textContent = '\u2713';
+        refreshCart();
+      });
+    });
+
+    function refreshCart() {
+      const n = cart.size;
+      cartBadge.textContent = n;
+      cartBadge.classList.remove('pop');
+      void cartBadge.offsetWidth;
+      cartBadge.classList.add('pop');
+
+      sbEmpty.style.display = n ? 'none' : 'block';
+
+      // Add new items
+      const existing = new Set();
+      sbItems.querySelectorAll('.sb-item').forEach(el => existing.add(el.dataset.id));
+
+      cart.forEach((item, id) => {
+        if (existing.has(id)) return;
+        const div = document.createElement('div');
+        div.className = 'sb-item';
+        div.dataset.id = id;
+        div.innerHTML = `<span class="sb-item-icon">${item.emoji}</span>
+          <div class="sb-item-info"><div class="sb-item-name">${item.label}</div><div class="sb-item-role">${item.role}</div></div>
+          <button class="sb-item-rm" data-id="${id}">&times;</button>`;
+        sbItems.appendChild(div);
+        div.querySelector('.sb-item-rm').addEventListener('click', () => removeItem(id));
+      });
+
+      sbCount.textContent = n + ' item' + (n !== 1 ? 's' : '');
+      sbImpact.innerHTML = '&#9733; ' + (n * 5.0).toFixed(1);
+    }
+
+    function removeItem(id) {
+      cart.delete(id);
+      const el = sbItems.querySelector(`[data-id="${id}"]`);
+      if (el) el.remove();
+      const btn = document.querySelector(`.p-add[data-id="${id}"]`);
+      if (btn) { btn.classList.remove('added'); btn.textContent = '+'; }
+      refreshCart();
+    }
+
+    // ========== CART SIDEBAR ==========
+    $('cartToggle').addEventListener('click', () => { overlay.classList.add('open'); sidebar.classList.add('open'); });
+    function closeCart() { overlay.classList.remove('open'); sidebar.classList.remove('open'); }
+    $('sbClose').addEventListener('click', closeCart);
+    overlay.addEventListener('click', closeCart);
+
+    // ========== CHECKOUT ==========
+    $('sbCheckout').addEventListener('click', () => { closeCart(); setTimeout(() => modalBg.classList.add('open'), 250); });
+    $('modalClose').addEventListener('click', () => modalBg.classList.remove('open'));
+    modalBg.addEventListener('click', e => { if (e.target === modalBg) modalBg.classList.remove('open'); });
+
+    // ========== DETAIL MODAL ==========
+    const detailBg = $('detailBg');
+    const detailData = {
+      datadog: {
+        emoji: '<img src="logos/datadog.png" alt="Datadog">', bg: '#EDE7F6', role: 'Product Manager', roleClass: 'role-pm',
+        name: 'Datadog', period: '2026 \u2013 Present',
+        summary: 'Recently joined Datadog as a Product Manager, working on building observability tools that help engineering teams monitor, troubleshoot, and optimize their cloud infrastructure.',
+        highlights: [],
+        tags: ['Current', 'SaaS', 'Observability', 'Cloud']
+      },
+      '1pass': {
+        emoji: '<img src="logos/1password-t.svg" alt="1Password">', bg: '#0094F5', role: 'Product Manager', roleClass: 'role-pm',
+        name: '1Password', period: 'Previous',
+        summary: 'Shipped product features for the world\u2019s most trusted password manager, delivering security tools to millions of users. Worked across the product lifecycle from discovery through launch, driving improvements to the core consumer experience.',
+        highlights: [
+          'Shipped product features used by millions of consumers and businesses globally',
+          'Drove product improvements to the core password management experience',
+          'Collaborated with design and engineering to deliver security tools that balance usability with protection',
+          'Worked on features that strengthened 1Password\u2019s position as the leading password manager'
+        ],
+        tags: ['Security', 'B2C', 'SaaS', 'Product Management']
+      },
+      tesla: {
+        emoji: '<img src="logos/tesla.png" alt="Tesla">', bg: '#FFEBEE', role: 'Technical Program Manager', roleClass: 'role-tpm',
+        name: 'Tesla', period: 'Previous',
+        summary: 'Managed and shipped vehicle software releases to a massive global customer base. Led the development of internal tools and built engineering dashboards to streamline release processes across the vehicle software organization.',
+        highlights: [
+          'Managed and shipped 20+ vehicle software releases to a customer base of over 6 million customers worldwide',
+          'Led the ideation, development, and implementation of new features for internal tools, enhancing productivity across the vehicle software organization',
+          'Engineered a Python-based Splunk dashboard to track delays in release sign-offs and identify responsible teams, enabling leadership to address bottlenecks',
+          'Rode every single vehicle in the fleet (except for Robotaxi \ud83e\udd2b)'
+        ],
+        tags: ['Automotive', 'Software Releases', 'Python', 'Splunk']
+      },
+      ws: {
+        emoji: '<img src="logos/wealthsimple.png" alt="Wealthsimple">', bg: '#E8F5E9', role: 'Product & Operations', roleClass: 'role-pm',
+        name: 'Wealthsimple', period: 'Previous',
+        summary: 'Drove product and operational initiatives at Canada\u2019s leading fintech platform, working across Product Management, UI/UX Design, User Research, and Operations. Helped improve the crypto user support experience on a platform with 3M+ users and nearly CAD$40 billion AUM.',
+        highlights: [
+          'Streamlined customer support ticket resolution by implementing automated workflows for triaging, reducing manual effort and improving efficiency',
+          'Built an automated weekly tracking system to monitor performance and drive continuous improvements',
+          'Developed dashboards and reporting tools using SQL and Preset, enabling teams to make data-driven decisions and enhance the crypto user support experience',
+          'Learned a lot about Web3, Crypto, and the behind-the-scenes of managing a platform with 3M+ users and nearly CAD$40B AUM'
+        ],
+        tags: ['Fintech', 'SQL', 'Preset', 'Web3', 'Operations']
+      },
+      ab: {
+        emoji: '<img src="logos/ab.png" alt="Anheuser-Busch">', bg: '#FFF3E0', role: 'Data Engineer', roleClass: 'role-data',
+        name: 'Anheuser-Busch', period: 'Previous',
+        summary: 'Built data tools and automation solutions at one of the world\u2019s largest consumer packaged goods companies. Developed Python-based tools and automated dashboards integrating live data from Excel and SAP systems. Some project details are under NDA.',
+        highlights: [
+          'Developed a Python-based tool for importing data from Excel and Word documents, making the order process significantly faster and more efficient',
+          'Created automated dashboards integrating live data from Excel and SAP systems, enabling team members to monitor orders and enhance delivery scheduling',
+          'Worked with Python, Excel, Word, and SAP across data and operations workflows'
+        ],
+        tags: ['Data Engineering', 'Python', 'SAP', 'CPG']
+      },
+      psys: {
+        emoji: '&#128640;', bg: '#EDE7F6', role: 'Software Engineer', roleClass: 'role-tpm',
+        name: 'Psystem', period: 'Previous',
+        summary: 'Ideated, developed, and rolled out a PsyHealth mobile app from 0 to 1 as a founding team member. Wore multiple hats spanning UI/UX Design, User Research, Engineering, Product Marketing, and Product Management. The app launched as a PWA and is now officially listed on the Google Play Store.',
+        highlights: [
+          'Ideated, developed, and rolled out the product from 0\u20131 as a founding team member',
+          'Covered UI/UX Design, User Research, Engineering, Product Marketing, and Product Management',
+          'Initially deployed as a progressive web app (PWA), now officially listed on the Google Play Store',
+          'Built a mental health app helping users with daily tracking and habit building'
+        ],
+        tags: ['Startup', 'Founding Team', '0\u20131', 'Google Play', 'HealthTech']
+      },
+      sched: {
+        emoji: '<img src="logos/hackwestern.png" alt="Hack Western">', bg: '#E8E0F0', role: 'Technical Project', roleClass: 'role-project',
+        name: 'Hack Western Event Scheduler', period: 'Hack Western 10',
+        link: 'https://www.figma.com/design/JNZ52KyUjY2JreplogrWd4/Hack-Western-10-Workshop-Scheduler?node-id=50-451&t=ZOfMCSOOEhCELjCw-1',
+        linkLabel: 'View Figma Design \u2192',
+        summary: 'Developed the front and back-end of the Hack Western 10 workshop scheduler. A full-stack application built with React, Node.js, and Express to help hackathon attendees plan their experience and never miss a workshop.',
+        highlights: [
+          'Developed the full front-end and back-end of the Hack Western 10 workshop scheduler',
+          'Built with React, Node.js, and Express',
+          'Designed the UI/UX in Figma before implementation',
+          'Helped hundreds of hackathon attendees plan their experience across multiple tracks'
+        ],
+        tags: ['React', 'Node.js', 'Express', 'Figma', 'Full-Stack']
+      },
+      imsg: {
+        emoji: '<img src="logos/imessage-t.svg" alt="iMessage">', bg: '#34C759', role: 'Creative Project', roleClass: 'role-project',
+        name: 'iMessage Portfolio', period: 'Personal Project',
+        link: 'https://justinyan.vercel.app/',
+        linkLabel: 'View Live Site \u2192',
+        summary: 'A portfolio website disguised as an iMessage conversation. Chat with an AI assistant to learn about my experience and projects.',
+        highlights: [
+          'Interactive chat-based portfolio with custom animations',
+          'Built with React and deployed on Vercel'
+        ],
+        tags: ['Creative', 'UI/UX', 'React', 'Vercel']
+      },
+      strava: {
+        emoji: '<img src="logos/strava-t.svg" alt="Strava">', bg: '#FC4C02', role: 'Data Viz Project', roleClass: 'role-project',
+        name: 'Strava Wrapped', period: '2025',
+        link: 'https://stravawrap.com/',
+        linkLabel: 'View Live Site \u2192',
+        summary: 'Year-in-review for Strava users. Pulls activity data from the Strava API and generates shareable fitness summaries, inspired by Spotify Wrapped.',
+        highlights: [
+          'Integrates with the Strava API for personalized activity data',
+          'Generates shareable year-in-review cards',
+          'Live at stravawrap.com'
+        ],
+        tags: ['Data Viz', 'Strava API', 'Fitness']
+      },
+      bereal: {
+        emoji: '<img src="logos/bereal-t.svg" alt="BeReal">', bg: '#1a1a1a', role: 'Product Proposal', roleClass: 'role-proposal',
+        name: 'BeReal Prompts', period: 'Product Design',
+        summary: 'Feature proposal adding daily prompts and posting streaks to BeReal to drive consistent engagement and make content more relatable across the user base.',
+        highlights: [
+          'Daily prompt feature integrated into the photo-capture flow',
+          'Posting streaks to motivate consistent daily engagement',
+          'User research on engagement pain points and content relatability',
+          'Phased launch plan from pilot to global rollout',
+          'Wireframes and prototypes designed in Figma'
+        ],
+        tags: ['Product Design', 'User Research', 'Social', 'Figma'],
+        link: 'https://jzhy.notion.site/BeReal-Prompts-fe51ef7f9f5541adab643047c8577e96'
+      },
+      status: {
+        emoji: '<img src="logos/datadog.png" alt="Datadog">', bg: '#EDE7F6', role: 'Current', roleClass: 'role-current',
+        name: 'PM @ Datadog', period: '2026 \u2013 Present',
+        summary: 'Just started as a Product Manager at Datadog, working on building observability tools for engineering teams at one of the leading cloud monitoring platforms.',
+        highlights: [
+          'Recently joined Datadog as a Product Manager',
+          'Working on building observability tooling for engineering teams',
+          'Ramping up on the cloud infrastructure monitoring space'
+        ],
+        tags: ['2025', 'Current']
+      },
+      edu: {
+        emoji: '<img src="logos/western-university.png" alt="Western University">', bg: '#E8E0F0', role: 'Education', roleClass: 'role-edu',
+        name: 'CS + Business at Western University', period: 'Ivey Business School',
+        summary: 'Dual degree in Computer Science and Business at Ivey Business School, Western University. Graduating with 2 Bachelor\'s in 5 years.',
+        highlights: [
+          'Computer Science + Business dual degree',
+          'Ivey Business School at Western University',
+          '2 Bachelor\'s degrees in 5 years'
+        ],
+        tags: ['Dual Degree', 'CS', 'Business']
+      },
+      hw: {
+        emoji: '<img src="logos/hackwestern.png" alt="Hack Western">', bg: '#E8E0F0', role: 'Leadership', roleClass: 'role-lead',
+        name: 'Hack Western 10', period: 'Web Team',
+        summary: 'Web Team member building the digital experience for Hack Western, Western University\u2019s largest student-run hackathon. Helped design and develop the web platform that serves hundreds of attendees.',
+        highlights: [
+          'Built the digital experience for Western\u2019s largest hackathon',
+          'Developed web platform features serving hundreds of attendees',
+          'Collaborated with organizers to deliver a seamless event experience'
+        ],
+        tags: ['Web Dev', 'Hackathon', 'Leadership']
+      },
+      itc: {
+        emoji: '<img src="logos/ivey-tech-club.png" alt="Ivey Tech Club">', bg: '#E0EDE8', role: 'VP Mentorship', roleClass: 'role-lead',
+        name: 'Ivey Tech Club', period: 'Vice President',
+        summary: 'VP Mentorship at the Ivey Tech Club, connecting students with industry mentors across tech and business. Built and managed a mentorship program that paired students with professionals at top technology companies.',
+        highlights: [
+          'Connected students with industry mentors across tech and business',
+          'Built and managed a structured mentorship program',
+          'Paired students with professionals at leading technology companies'
+        ],
+        tags: ['VP', 'Mentorship', 'Community']
+      },
+      wps: {
+        emoji: '<img src="logos/ivey-product-society.png" alt="Ivey Product Society">', bg: '#fff', role: 'VP Fellowship', roleClass: 'role-lead',
+        name: 'Western Product Society', period: 'Vice President',
+        summary: 'VP Fellowship at the Western Product Society, cultivating the next generation of product thinkers through workshops, case competitions, and community building.',
+        highlights: [
+          'Cultivated the next generation of product thinkers',
+          'Organized workshops and case competitions for aspiring PMs',
+          'Built a community of students passionate about product management'
+        ],
+        tags: ['VP', 'Fellowship', 'Product']
+      }
+    };
+
+    function openDetail(id) {
+      const d = detailData[id];
+      if (!d) return;
+      $('detailEmoji').innerHTML = d.emoji;
+      $('detailEmoji').style.background = d.bg;
+      $('detailRole').textContent = d.role;
+      $('detailRole').className = 'detail-role ' + d.roleClass;
+      $('detailName').textContent = d.name;
+      $('detailPeriod').textContent = d.period;
+      $('detailSummary').textContent = d.summary;
+      const hl = $('detailHighlights');
+      if (d.highlights.length) {
+        hl.innerHTML = '<h4>Highlights</h4><ul>' + d.highlights.map(h => '<li>' + h + '</li>').join('') + '</ul>';
+        hl.style.display = '';
+      } else {
+        hl.innerHTML = '';
+        hl.style.display = 'none';
+      }
+      const link = $('detailLink');
+      if (d.link) {
+        link.href = d.link;
+        link.textContent = d.linkLabel || 'View Project \u2192';
+        link.style.display = 'inline-flex';
+      } else {
+        link.style.display = 'none';
+      }
+      const tags = $('detailTags');
+      tags.innerHTML = d.tags.map(t => '<span class="detail-tag">' + t + '</span>').join('');
+      detailBg.classList.add('open');
+    }
+
+    // Make all cards clickable
+    document.querySelectorAll('.p-card').forEach(card => {
+      card.addEventListener('click', e => {
+        if (e.target.closest('.p-add')) return; // Don't open detail when clicking + button
+        const btn = card.querySelector('.p-add');
+        if (btn && btn.dataset.id) openDetail(btn.dataset.id);
+      });
+    });
+
+    $('detailClose').addEventListener('click', () => detailBg.classList.remove('open'));
+    detailBg.addEventListener('click', e => { if (e.target === detailBg) detailBg.classList.remove('open'); });
+  </script>
+</body>
+</html>

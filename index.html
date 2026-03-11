@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Justin Yan | Pokemon Battle</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <div id="game">
+
+    <!-- ====== BATTLE SCENE (top half) ====== -->
+    <div class="battle-scene">
+      <div class="battle-bg">
+        <div class="grass-left"></div>
+        <div class="grass-right"></div>
+      </div>
+
+      <!-- Opponent (Justin) - top left -->
+      <div class="opponent-side">
+        <div class="opponent-info">
+          <div class="info-name">JUSTIN YAN</div>
+          <div class="info-level">Lv50</div>
+          <div class="hp-bar-container">
+            <span class="hp-label">HP</span>
+            <div class="hp-bar-track">
+              <div class="hp-bar-fill" id="opponentHp" style="width:100%"></div>
+            </div>
+          </div>
+        </div>
+        <div class="opponent-sprite" id="opponentSprite">
+          <div class="sprite-pokeball">
+            <div class="pb-top"></div>
+            <div class="pb-band"><div class="pb-button"></div></div>
+            <div class="pb-bottom"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Player (Visitor) - bottom right -->
+      <div class="player-side">
+        <div class="player-sprite" id="playerSprite">
+          <div class="player-char">?</div>
+        </div>
+        <div class="player-info">
+          <div class="info-name">VISITOR</div>
+          <div class="info-level">Lv1</div>
+          <div class="hp-bar-container">
+            <span class="hp-label">HP</span>
+            <div class="hp-bar-track">
+              <div class="hp-bar-fill" id="playerHp" style="width:100%"></div>
+            </div>
+          </div>
+          <div class="hp-numbers"><span id="playerHpNum">20</span> / 20</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== BOTTOM PANEL ====== -->
+    <div class="bottom-panel">
+
+      <!-- Text box (left) -->
+      <div class="text-box" id="textBox">
+        <p id="textContent"></p>
+        <div class="text-advance" id="textAdvance">&#x25BC;</div>
+      </div>
+
+      <!-- Action menu (right) - toggles between states -->
+      <div class="action-box" id="actionBox">
+
+        <!-- Main menu: FIGHT / BAG / POKEMON / RUN -->
+        <div class="menu main-menu" id="mainMenu">
+          <button class="menu-btn" data-action="fight">FIGHT</button>
+          <button class="menu-btn" data-action="bag">BAG</button>
+          <button class="menu-btn" data-action="pokemon">POK&Eacute;MON</button>
+          <button class="menu-btn" data-action="run">RUN</button>
+        </div>
+
+        <!-- FIGHT sub-menu: experience moves -->
+        <div class="menu fight-menu hidden" id="fightMenu">
+          <button class="menu-btn move-btn" data-move="about">
+            <span class="move-name-text">ABOUT ME</span>
+            <span class="move-type type-psychic">PSYCHIC</span>
+          </button>
+          <button class="menu-btn move-btn" data-move="experience">
+            <span class="move-name-text">EXPERIENCE</span>
+            <span class="move-type type-steel">STEEL</span>
+          </button>
+          <button class="menu-btn move-btn" data-move="projects">
+            <span class="move-name-text">PROJECTS</span>
+            <span class="move-type type-electric">ELECTRIC</span>
+          </button>
+          <button class="menu-btn move-btn" data-move="skills">
+            <span class="move-name-text">SKILLS</span>
+            <span class="move-type type-fire">FIRE</span>
+          </button>
+          <div class="fight-back">
+            <button class="menu-btn back-btn" data-action="back">&larr; BACK</button>
+            <div class="pp-info">PP <span id="ppCount">15</span>/15</div>
+          </div>
+        </div>
+
+        <!-- BAG sub-menu: contact info -->
+        <div class="menu bag-menu hidden" id="bagMenu">
+          <a href="mailto:justinyan.career@gmail.com" class="menu-btn item-btn">
+            <span class="item-icon">&#x2709;</span>
+            <span>EMAIL</span>
+          </a>
+          <a href="https://www.linkedin.com/in/justinyan13" target="_blank" class="menu-btn item-btn">
+            <span class="item-icon">&#x1F4BC;</span>
+            <span>LINKEDIN</span>
+          </a>
+          <a href="https://calendly.com/justinyan/chat" target="_blank" class="menu-btn item-btn">
+            <span class="item-icon">&#x2615;</span>
+            <span>COFFEE CHAT</span>
+          </a>
+          <button class="menu-btn back-btn" data-action="back">&larr; BACK</button>
+        </div>
+
+        <!-- POKEMON sub-menu: past roles -->
+        <div class="menu pokemon-menu hidden" id="pokemonMenu">
+          <button class="menu-btn pkmn-btn" data-role="datadog">
+            <span class="pkmn-name">DATADOG</span>
+            <span class="pkmn-role">PM</span>
+            <span class="pkmn-active">&#x25C6;</span>
+          </button>
+          <button class="menu-btn pkmn-btn" data-role="1password">
+            <span class="pkmn-name">1PASSWORD</span>
+            <span class="pkmn-role">PM</span>
+          </button>
+          <button class="menu-btn pkmn-btn" data-role="tesla">
+            <span class="pkmn-name">TESLA</span>
+            <span class="pkmn-role">TPM</span>
+          </button>
+          <button class="menu-btn pkmn-btn" data-role="wealthsimple">
+            <span class="pkmn-name">WEALTHSIMPLE</span>
+            <span class="pkmn-role">P&amp;O</span>
+          </button>
+          <button class="menu-btn pkmn-btn" data-role="ab">
+            <span class="pkmn-name">ANHEUSER-BUSCH</span>
+            <span class="pkmn-role">DE</span>
+          </button>
+          <button class="menu-btn pkmn-btn" data-role="psystem">
+            <span class="pkmn-name">PSYSTEM</span>
+            <span class="pkmn-role">TPM</span>
+          </button>
+          <button class="menu-btn back-btn" data-action="back">&larr; BACK</button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ====== DETAIL OVERLAY (slides up when a move/pokemon is selected) ====== -->
+    <div class="detail-overlay hidden" id="detailOverlay">
+      <div class="detail-card" id="detailCard">
+        <button class="detail-close" id="detailClose">&times;</button>
+        <div class="detail-header">
+          <span class="detail-number" id="detailNumber"></span>
+          <h2 class="detail-title" id="detailTitle"></h2>
+          <div class="detail-types" id="detailTypes"></div>
+        </div>
+        <div class="detail-body" id="detailBody"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
